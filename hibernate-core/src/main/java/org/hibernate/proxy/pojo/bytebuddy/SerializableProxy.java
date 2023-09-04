@@ -110,32 +110,10 @@ public final class SerializableProxy extends AbstractSerializableProxy {
 	}
 
 	private Object readResolve() {
-		final SessionFactoryImplementor sessionFactory = retrieveMatchingSessionFactory( this.sessionFactoryUuid );
-		BytecodeProviderImpl byteBuddyBytecodeProvider = retrieveByteBuddyBytecodeProvider( sessionFactory );
+		BytecodeProviderImpl byteBuddyBytecodeProvider = new BytecodeProviderImpl();
 		HibernateProxy proxy = byteBuddyBytecodeProvider.getByteBuddyProxyHelper().deserializeProxy( this );
 		afterDeserialization( (ByteBuddyInterceptor) proxy.getHibernateLazyInitializer() );
 		return proxy;
-	}
-
-	private static SessionFactoryImplementor retrieveMatchingSessionFactory(final String sessionFactoryUuid) {
-		Objects.requireNonNull( sessionFactoryUuid );
-		final SessionFactoryImplementor sessionFactory = SessionFactoryRegistry.INSTANCE.getSessionFactory( sessionFactoryUuid );
-		if ( sessionFactory != null ) {
-			return sessionFactory;
-		}
-		else {
-			throw new IllegalStateException( "Could not identify any active SessionFactory having UUID " + sessionFactoryUuid );
-		}
-	}
-
-	private static BytecodeProviderImpl retrieveByteBuddyBytecodeProvider(final SessionFactoryImplementor sessionFactory) {
-		final BytecodeProvider bytecodeProvider = sessionFactory.getServiceRegistry().getService( BytecodeProvider.class );
-		if ( bytecodeProvider instanceof BytecodeProviderImpl ) {
-			return (BytecodeProviderImpl) bytecodeProvider;
-		}
-		else {
-			throw new IllegalStateException( "Unable to deserialize a SerializableProxy proxy: the bytecode provider is not ByteBuddy." );
-		}
 	}
 
 }
